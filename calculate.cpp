@@ -1,5 +1,6 @@
 #include "calculate.h"
 #include <algorithm>
+#include <iostream>
 
 calculator::calculator(std::string expr)
 {
@@ -96,8 +97,11 @@ double calculator::calculate()
 		}
 		if (y == UP)
 		{
-			if (i - 1 < 0) 
-				exit(666);
+			if (i - 1 < 0)
+			{
+				std::cout << "ERROR 0";
+				exit(-1);
+			}
 
 			if (objs.back().oprs.size() == 1 && objs.back().vls.size() == 1 && objs.back().oprs.back() == '-')
 				x *= -1;
@@ -129,7 +133,11 @@ double calculator::calculate()
 
 					break;
 				}
-			if (k == -1) exit(66065);
+			if (k == -1)
+			{
+				std::cout << "ERROR 1\n";
+				exit(-1);
+			}
 			continue;
 		}
 
@@ -214,46 +222,57 @@ void calculator::format(std::string& expr)
 	std::string operators = "+-^/*";
 
 	std::string final_expr = "";
-	for (int i = 0; i < expr.size(); i++)
-	{
-		if (expr[i] == ' ')
-			continue;
-		final_expr += expr[i];
+	try {
+		for (int i = 0; i < expr.size(); i++)
+		{
+			if (expr[i] == ' ')
+				continue;
+			final_expr += expr[i];
 
-		if (expr[i] == '(')
-		{
-			if (expr[i + 1] != '-' && (expr[i + 1] < '0' || expr[i + 1] > '9') && expr[i + 1] != '(')
-				exit(-1);
-			stack.push_back(1);
-		}
-		else if (expr[i] == ')')
-		{
-			if (stack.empty())
-				exit(-1);
-			stack.pop_back();
-		}
-		else if (expr[i] >= '0' && expr[i] <= '9')
-		{
-			int _end = final_expr.size();
-			if (_end > 0)
+			if (expr[i] == '(')
 			{
-				_end -= 2;
-				if (_end >= 0 && final_expr[_end] == ')')
-					exit(-1);
+				if (expr[i + 1] != '-' && (expr[i + 1] < '0' || expr[i + 1] > '9') && expr[i + 1] != '(')
+					throw "After ( unknown symbol";
+				stack.push_back(1);
 			}
-			if (expr[i + 1] == '(')
-				final_expr += '*';
+			else if (expr[i] == ')')
+			{
+				if (stack.empty())
+					throw "( doesn't found";
+				stack.pop_back();
+			}
+			else if (expr[i] >= '0' && expr[i] <= '9')
+			{
+				int _end = final_expr.size();
+				if (_end > 0)
+				{
+					_end -= 2;
+					if (_end >= 0 && final_expr[_end] == ')')
+						throw "(  doesn't found";
+				}
+				if (expr[i + 1] == '(')
+					final_expr += '*';
+			}
+			else if (expr[i] == '.')
+			{
+				if (expr[i + 1] < '0' || expr[i + 1] > '9')
+					final_expr += '0';
+			}
+			else if (operators.find(expr[i]) == std::string::npos)
+				throw "Unknown operator";
 		}
-		else if (expr[i] == '.')
-		{
-			if (expr[i + 1] < '0' || expr[i + 1] > '9')
-				final_expr += '0';
-		}
-		else if (operators.find(expr[i]) == std::string::npos)
-			exit(-1);
+		if (!stack.empty())
+			throw ") doesn't found";
 	}
-	if (!stack.empty())
+	catch (std::string err_msg)
+	{
+		std::cout << err_msg << '\n';
 		exit(-1);
-
+	}
+	catch (...)
+	{
+		std::cout << "Unknown error\n";
+		exit(-1);
+	}
 	expr = final_expr;
 }
